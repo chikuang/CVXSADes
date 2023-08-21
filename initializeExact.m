@@ -1,8 +1,8 @@
-function We = initializeExact(W,N)
+function We = initializeExact(W, N)
 % initializeExact(W,N): given list of weights W for approximate design, and
 % total number of design points N, return modified weight list We such that
 % for each w[i] in We, N*w gives the exact integer number of points for
-% the ith support point in the exact design
+% the i-th support point in the exact design
  
 We = floor(N*W); % take floor of approx design*N, sum(We) <= N initially
 

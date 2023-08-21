@@ -5,9 +5,9 @@
 clear;
 runningtime=cputime;  %record computation time
     tol = 10^(-4);
-    N=21;         %number of design points   
+    N = 21;         %number of design points   
      
-    a=  -1;   %[a, b] is the design space
+    a=   0;   %[a, b] is the design space
     b=   1;   %
      
      p=4;            %degree of polynomial regression model 
@@ -55,10 +55,10 @@ runningtime=cputime;  %record computation time
 
 %Find n exact design points using an annealing algorithm with the
 %following setting
-n=25;   %Works for 25 
-c0=1; %max number of points to be changed in the annealing algorithm
+n=6;   %Works for 25 
+c0=3; %max number of points to be changed in the annealing algorithm
 Nt=200; %number of iterations per temperature change
-T0=0.1; %initial temperature
+T0=25; %initial temperature
 M0=1000; %number of temperature changes before algorithm stops
 alpha=0.9;  %temperature cooling rate
 
@@ -94,7 +94,7 @@ loss(1) = L0;
 rng(523803);  %random seed number
 num_iters = 1;
 T = T0;
-while(T > Tmin)
+while(T > Tmin )
 
     % GENERATING RANDOM CANDIDATE DESIGN
     for h = 1:Nt
@@ -125,10 +125,10 @@ while(T > Tmin)
         % generate new points in neighbourhood of those previously removed
         i = 1;
         for j = toRemove
-                di_nb =di(j,:)+ (2*rand(1)-1)*delta;
-                di_nb=min([max([a, di_nb]),b]); 
-                di(k+i,:) = di_nb;
-                i = i + 1; 
+          di_nb =di(j,:)+ (2*rand(1)-1)*delta;
+          di_nb=min([max([a, di_nb]),b]); 
+          di(k+i,:) = di_nb;
+          i = i + 1; 
         end
         % points are generated in a circular, spherical, or hyperspherical
         % region (depending on the dimension of the design) of radius
@@ -199,7 +199,8 @@ title("Exact design distribution")
 %legend([plt1,plt2], ["Final Design", "Initial Design"])
 %grid on
 
-resulttime=cputime-runningtime  %computation time
+[L00, loss(num_iters)]
+resulttime = cputime-runningtime  %computation time
  
      
     
