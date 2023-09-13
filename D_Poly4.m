@@ -1,7 +1,6 @@
 %%Compute D-optimal designs for polynomial regression 
 %%with exact n points
  
-
 clear;
 runningtime=cputime;  %record computation time
     tol = 10^(-4);
@@ -55,7 +54,7 @@ runningtime=cputime;  %record computation time
 
 %Find n exact design points using an annealing algorithm with the
 %following setting
-n=6;   %Works for 25 
+n = 17;   %Works for 25 
 c0=3; %max number of points to be changed in the annealing algorithm
 Nt=200; %number of iterations per temperature change
 T0=25; %initial temperature
@@ -180,12 +179,23 @@ w0
 sum(w0)
 design=sort(d0)
 
-%Need to work on this plot below!!!!!
-figure;
-scatter(d0,n*w0,"blue");
+figure; 
+% scatter(d0,n*w0,"blue");
+h = histogram(d0, 500, "EdgeColor", "blue")
 xlabel("support points");
-ylabel("weights");
-title("Exact design distribution")
+ylabel("Frequency");
+title("Exact design distribution (n = " + size(d0,1) + ")")
+ax = gca;
+ax.YTick = unique( round(ax.YTick) );
+
+% % Compute centers of hist bins
+% binCnt = h.BinEdges(2:end) - h.BinWidth/2;
+% % Get bar heights
+% barHeights = h.Values;
+% % plot red * at top of bins
+% hold on
+% plot(binCnt, barHeights, 'red*', "MarkerSize", 15)
+% hold off
 
 % Plot initial and final design
 %figure;

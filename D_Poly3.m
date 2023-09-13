@@ -180,12 +180,14 @@ w0
 sum(w0)
 design=sort(d0)
 
-%Need to work on this plot below!!!!!
-figure;
-scatter(d0,n*w0,"blue");
+figure; 
+% scatter(d0,n*w0,"blue");
+histogram(d0, 500, "EdgeColor", "red")
 xlabel("support points");
-ylabel("weights");
-title("Exact design distribution")
+ylabel("Frequency");
+title("Exact design distribution (n = " + size(d0,1) + ")")
+ax = gca;
+ax.YTick = unique( round(ax.YTick) );
 
 % Plot initial and final design
 %figure;
