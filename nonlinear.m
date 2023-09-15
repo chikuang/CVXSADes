@@ -3,9 +3,9 @@
 clear;
 runningtime = cputime;  %record computation time
 
-fun = @peleg;
-% beta = [1, 2, 3]';
-beta = [0.5, 0.05]';
+fun = @logis_curve;
+beta = [1, 2, 3]';
+% beta = [0.5, 0.05]';
 a =  -1;   %[a, b] is the design space
 b =   1;  
 
@@ -178,9 +178,9 @@ loss1 = loss(1:num_iters);
 % here, we group the values that are the same together
 design_ex_temp = round(sortrows([d0, w0]),4);
 val = unique(design_ex_temp(:,1));
-weight = groupcounts(design_ex_temp(:,1));
+n_count = groupcounts(design_ex_temp(:,1));
 sum(w0)
-design_ex = [val, weight]';
+design_ex = [val, n_count]';
 
 figure; 
 % scatter(d0,n*w0,"blue");
@@ -195,7 +195,6 @@ resulttime = cputime-runningtime  %computation time
 
 design_app
 design_ex
-[L00, loss1(1), min(loss1)]
-    
-
-
+L_val = [L00, loss1(1), loss1(end)].';
+rowname = {'Approx', 'Exact (initial)', 'Exact (Final)'}.';
+table(L_val, 'RowNames', rowname)

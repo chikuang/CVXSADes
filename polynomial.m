@@ -45,7 +45,7 @@ L00 = cvx_optval; % optimal objective value
 
 %% 2. Find n exact design points using an annealing algorithm with the
 % following setting
-n = 24; % number of support point in the exact design
+n = 20; % number of support point in the exact design
 c0 = 1; % max number of points to be changed in the annealing algorithm
 Nt = 200; % number of iterations per temperature change
 T0 = 0.1; % initial temperature
@@ -179,9 +179,9 @@ loss1 = loss(1:num_iters);
 % here, we group the values that are the same together
 design_ex_temp = round(sortrows([d0, w0]),4);
 val = unique(design_ex_temp(:,1));
-weight = groupcounts(design_ex_temp(:,1));
+n_count = groupcounts(design_ex_temp(:,1));
 sum(w0)
-design_ex = [val, weight]';
+design_ex = [val, n_count]';
 
 figure; 
 % scatter(d0,n*w0,"blue");
@@ -196,5 +196,7 @@ resulttime = cputime-runningtime  %computation time
 
 design_app
 design_ex
-[L00, loss1(1), min(loss1)]
+L_val = [L00, loss1(1), loss1(end)].';
+rowname = {'Approx', 'Exact (initial)', 'Exact (Final)'}.';
+table(L_val, 'RowNames', rowname)
     
