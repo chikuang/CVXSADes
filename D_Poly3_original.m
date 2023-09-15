@@ -1,15 +1,16 @@
 %%Compute D-optimal designs for polynomial regression 
 %%with exact n points
  
+
 clear;
 runningtime=cputime;  %record computation time
     tol = 10^(-4);
-    N = 21;         %number of design points   
+    N=21;         %number of design points   
      
-    a=   0;   %[a, b] is the design space
+    a=  -1;   %[a, b] is the design space
     b=   1;   %
      
-     p=4;            %degree of polynomial regression model 
+     p=3;            %degree of polynomial regression model 
      
     u=linspace(a,b,N); %equally spaced N points in [a,b]
 
@@ -54,11 +55,11 @@ runningtime=cputime;  %record computation time
 
 %Find n exact design points using an annealing algorithm with the
 %following setting
-n = 17;   %Works for 25 
-c0=3; %max number of points to be changed in the annealing algorithm
+n=19;
+c0=1; %max number of points to be changed in the annealing algorithm
 Nt=200; %number of iterations per temperature change
-T0=25; %initial temperature
-M0=1000; %number of temperature changes before algorithm stops
+T0=0.1; %initial temperature
+M0=500; %number of temperature changes before algorithm stops
 alpha=0.9;  %temperature cooling rate
 
 Tmin=T0*alpha^M0; %minimum temperature
@@ -72,7 +73,7 @@ w0=w00;
 
 k=length(w0); 
 
-FIM=FIM_1dregPp(d00,p);
+FIM=FIM_1dregPp(d00,3);
 FIM=sum(FIM.*reshape(w0,1,1,[]),3);
 q=p+1;
 
@@ -93,7 +94,7 @@ loss(1) = L0;
 rng(523803);  %random seed number
 num_iters = 1;
 T = T0;
-while(T > Tmin )
+while(T > Tmin)
 
     % GENERATING RANDOM CANDIDATE DESIGN
     for h = 1:Nt
@@ -124,10 +125,10 @@ while(T > Tmin )
         % generate new points in neighbourhood of those previously removed
         i = 1;
         for j = toRemove
-          di_nb =di(j,:)+ (2*rand(1)-1)*delta;
-          di_nb=min([max([a, di_nb]),b]); 
-          di(k+i,:) = di_nb;
-          i = i + 1; 
+                di_nb =di(j,:)+ (2*rand(1)-1)*delta;
+                di_nb=min([max([a, di_nb]),b]); 
+                di(k+i,:) = di_nb;
+                i = i + 1; 
         end
         % points are generated in a circular, spherical, or hyperspherical
         % region (depending on the dimension of the design) of radius
@@ -138,7 +139,7 @@ while(T > Tmin )
         wi = wi(wi>0.0001);
         
         % compute loss of candidate design
-        FIMi = FIM_1dregPp(di,p);
+        FIMi = FIM_1dregPp(di,3);
         FIMi = sum(FIMi.*reshape(wi,1,1,[]),3);
         Li = -log(det(FIMi)^(1/q));
    
@@ -179,23 +180,12 @@ w0
 sum(w0)
 design=sort(d0)
 
-figure; 
-% scatter(d0,n*w0,"blue");
-h = histogram(d0, 500, "EdgeColor", "blue")
+%Need to work on this plot below!!!!!
+figure;
+scatter(d0,n*w0,"blue");
 xlabel("support points");
-ylabel("Frequency");
-title("Exact design distribution (n = " + size(d0,1) + ")")
-ax = gca;
-ax.YTick = unique( round(ax.YTick) );
-
-% % Compute centers of hist bins
-% binCnt = h.BinEdges(2:end) - h.BinWidth/2;
-% % Get bar heights
-% barHeights = h.Values;
-% % plot red * at top of bins
-% hold on
-% plot(binCnt, barHeights, 'red*', "MarkerSize", 15)
-% hold off
+ylabel("weights");
+title("Exact design distribution")
 
 % Plot initial and final design
 %figure;
@@ -209,8 +199,7 @@ ax.YTick = unique( round(ax.YTick) );
 %legend([plt1,plt2], ["Final Design", "Initial Design"])
 %grid on
 
-[L00, loss(num_iters)]
-resulttime = cputime-runningtime  %computation time
+resulttime=cputime-runningtime  %computation time
  
      
-    
+[L00, loss1(1), min(loss1)]
