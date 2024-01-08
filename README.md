@@ -1,5 +1,9 @@
 # exact-design-SA
-Construct exact design using CVX with conjuction to simulated annealing
+Construct exact design using CVX with conjunction to simulated annealing (SA).
+
+## Authors:
+1. [Julie Zhou](https://www.uvic.ca/science/math-statistics/people/home/faculty/zhou_julie.php)
+2. [Chi-Kuang Yeh](https://chikuang.github.io/)
 
 
 ### TODO
