@@ -4,13 +4,13 @@ clear;
 runningtime = cputime;  %record computation time
 
 %% 0. Initialization
-tol = 10^(-4); % for finding and filtering out the points 
+tol = 1E-4; % for finding and filtering out the points 
 tol_annealing = 1E-40;
 N = 21;  % number of design points for initial design
 
 a =  -1;   %[a, b] is the design space
 b =   1;  
-p = 4;            % degree of polynomial regression model  
+p = 3;            % degree of polynomial regression model  
 q = p+1; % how many beta's (degree + 1 intercept term)
 u = linspace(a, b, N); %equally spaced N points in [a,b]
 
@@ -85,7 +85,9 @@ loss(1) = L0;
 % previous design. This is to test if an exact design can be further
 % optimized by replacing some of the support points with nearby points.
 
-rng(523803);  %random seed number
+% rng(523803);  %random seed number
+
+rng(555);  %random seed number
 num_iters = 1;
 T = T0;
 L_prev = 0;
@@ -190,13 +192,12 @@ xlabel("Design space");
 ylabel("Frequency");
 title("Exact design distribution (n = " + sum(design_ex(2,:)) + ")")
 ax = gca;
-ax.YTick = unique( round(ax.YTick) );
+ax.YTick = unique(round(ax.YTick) );
 
 resulttime = cputime-runningtime  %computation time
 
-design_app
+design_app 
 design_ex
 L_val = [L00, loss1(1), loss1(end)].';
 rowname = {'Approx', 'Exact (initial)', 'Exact (Final)'}.';
 table(L_val, 'RowNames', rowname)
-    
