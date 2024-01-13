@@ -1,13 +1,13 @@
 %%Compute D-optimal designs for polynomial regression with exact n points
  
 clear;
-runningtime = cputime;  %record computation time
+% runningtime = cputime;  %record computation time
 
 %% 0. Initialization
 tol = 1E-4; % for finding and filtering out the points 
 tol_annealing = 1E-40;
 N = 51;  % number of design points for initial design
-
+  
 a =  -1;   %[a, b] is the design space
 b =   1;  
 p = 3;            % degree of polynomial regression model  
@@ -56,42 +56,44 @@ Tmin = T0 * alpha^M0; %minimum temperature
 
 delta = 2*(b-a)/(N-1); % neighbourhood size, in this setting, it is 0.2
 
-w01 = initializeExact(w00, n); %convert approximate design lazily to an exact design
-d0 = design_app(1,:);
-w0 = w01;
-
-
-k = length(w0); 
-
-FIM_temp = FIM_polyP(d00, p);
-
-FIM = zeros(q, q);
-for j=1:size(design_app,2)    
-  FIM = FIM + FIM_temp(:,:,j) * w0(j);
-end
-
-
-L0 = -log(det(FIM)^(1/q));  %D-optimality
-
-% store loss at each iteration for plotting
-loss = zeros(M0*Nt,1);
-loss(1) = L0;
-
-%% 3. ANNEALING ALGORITTHM
-
-% This algorithm is an implementation of simulated annealing with a constraint
-% on the generation of points. New generated points for candidate designs
-% are within a predefinied neighbourhood of some random subset of points from the
-% previous design. This is to test if an exact design can be further
-% optimized by replacing some of the support points with nearby points.
-
-% rng(523803);  %random seed number
-Nsim = 1000;
+Nsim = 500;
 LOSS = zeros(Nsim, 2);
+
 for ell=1:Nsim 
   disp(ell)
-  % rng(ell);  %random seed number, 284
-  rng(958)
+  rng(ell);  %random seed number
+  % rng(202)
+  w01 = initializeExact(w00, n); %convert approximate design lazily to an exact design
+  d0 = design_app(1,:);
+  w0 = w01;
+  
+  
+  k = length(w0); 
+  
+  FIM_temp = FIM_polyP(d00, p);
+  
+  FIM = zeros(q, q);
+  for j=1:size(design_app,2)    
+    FIM = FIM + FIM_temp(:,:,j) * w0(j);
+  end
+  
+  
+  L0 = -log(det(FIM)^(1/q));  %D-optimality
+  
+  % store loss at each iteration for plotting
+  loss = zeros(M0*Nt,1);
+  loss(1) = L0;
+
+  %% 3. ANNEALING ALGORITTHM
+  
+  % This algorithm is an implementation of simulated annealing with a constraint
+  % on the generation of points. New generated points for candidate designs
+  % are within a predefinied neighbourhood of some random subset of points from the
+  % previous design. This is to test if an exact design can be further
+  % optimized by replacing some of the support points with nearby points.
+
+
+
   num_iters = 1;
   T = T0;
   L_prev = 0;
@@ -181,3 +183,4 @@ for ell=1:Nsim
   design_ex = [val, n_count]';
   LOSS(ell,:) = [ell, loss1(end)];
 end
+  
