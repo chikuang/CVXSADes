@@ -7,10 +7,16 @@ Construct an exact design using CVX in conjunction with simulated annealing (SA)
 
 
 ### TODO
+- [ ] It would be even better if we can use the symmetry property in the annealing algorithm for the cubic model. We can just work on the design points on [0, 1] and make it symmetric on [-1, 0].
+- [ ] Cubic polynomial model; A- and D-optimality criteria
+- [ ] Second-order linear models with 2 or 3 variables;  A- and I-optimality?
+- [ ] Nonlinear models - 2-compartment model, peleg model, Emax model?
+- [ ] GLMs with several design variables?
+- [ ] A-optimality for exact design.
+
+### Complete 
 - In the D-optimal design criterion where the loss function is $-\log(\det(I(\xi)))$.
-  - [ ] Using an approximate design from CVX and N=21 for the discrete design space $S_N$, construct $n=20$ exact D-optimal design points in [-1, 1] via an annealing algorithm
-  - [ ] Using an approximate design from CVX and N=21 for the discrete design space $S_N$, construct $n=18$ exact D-optimal design points in [-1, 1] via an annealing algorithm.
-  - [ ] Using an approximate design from CVX and N=51 for the discrete design space $S_N$, construct $n=20$ exact D-optimal design points in [-1, 1] via an annealing algorithm.
-  - [ ] Using an approximate design from CVX and N=51 for the discrete design space $S_N$, construct $n=18$ exact D-optimal design points in [-1, 1] via an annealing algorithm.
-- Question: Can we use the symmetry property of the D-optimal design?
-- Try A-optimality for the exact design afterward.
+  - [x] Using an approximate design from CVX and N=21 for the discrete design space $S_N$, construct $n=20$ exact D-optimal design points in [-1, 1] via an annealing algorithm
+  - [x] Using an approximate design from CVX and N=21 for the discrete design space $S_N$, construct $n=18$ exact D-optimal design points in [-1, 1] via an annealing algorithm.
+  - [x] Using an approximate design from CVX and N=51 for the discrete design space $S_N$, construct $n=20$ exact D-optimal design points in [-1, 1] via an annealing algorithm.
+  - [x] Using an approximate design from CVX and N=51 for the discrete design space $S_N$, construct $n=18$ exact D-optimal design points in [-1, 1] via an annealing algorithm.
