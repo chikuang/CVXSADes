@@ -1,0 +1,87 @@
+---
+title: "Naive way to incoopriate symmetric property does not work"
+author: |
+  | Chi-Kuang Yeh
+  | University of Waterloo
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+bibliography: ref.bib
+output:
+  rmarkdown::html_document:
+    theme: readable
+    code_folding: hide
+    toc: true
+    toc_float: yes
+    number_sections: true
+---
+
+<!-- latex macros -->
+
+```{=plain}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\ep}{\varepsilon}
+\newcommand{\E}{\mathbb E}
+```
+
+```{r setup, message = F}
+library(tibble)
+library(dplyr)
+library(janitor) # to add the sum/total
+library(knitr)
+library(kableExtra)
+partial_deri_poly <- function(x, w){
+  w * (c(1,x,x^2,x^3) %o% c(1,x,x^2,x^3))
+}
+
+calc_loss_poly <- function(design, p){
+  point <- design$x
+  weight <- design$weight
+  n_x <- nrow(design) 
+  FIM <- matrix(0, nrow = p+1, ncol = p+1)
+  for(i in 1:n_x){
+    FIM <- FIM + partial_deri_poly(point[i], weight[i])
+  }
+  list(Dopt = -log(det(FIM)^(1/(p+1))),
+       Aopt = sum(diag(solve(FIM)))
+  )
+}
+```
+
+# The naive way to utilise the symmetric property is prohibited.
+
+With a cubic polynomial model with $N=21$
+
+If the design space is $\chi=[0,1]$, the optimal (approximated) design is
+
+```{r}
+design_app <- matrix(c(0, 0.25, 0.3, 0.7, 0.75, 1,
+      0.24953,  0.11286,  0.13761, 0.13761, 0.11286, 0.24953),
+                     byrow = T, nrow = 2)
+design_ex <- matrix(c(0, 0.2747, 0.2763, 0.2795, 0.723, 0.724, 0.726, 1,
+            2, 1, 1, 1, 1, 1, 1, 2), byrow = T, nrow = 2)
+design_app_tibble <- tibble(design_pt = design_app[1,], weight = design_app[2,])
+design_ex_tibble <- tibble(design_pt = design_ex[1,], n_point = design_ex[2,])
+design_app %>% kbl(.,caption = "Approximate design on [0,1]") %>% 
+  kable_paper("hover", full_width = F)
+design_ex %>% kbl(.,caption = "Exact design (n=10) on [0,1]") %>% 
+  kable_paper("hover", full_width = F)
+```
+
+If the design space is $\chi=[-1,1]$, the optimal (approximated) design is
+
+```{r}
+design_app <- matrix(c(-1, -0.5, -0.4, 0.4, 0.5, 1,
+                        0.24953, 0.11286, 0.13761, 0.13761, 0.11286, 0.24953),
+                        byrow = T, nrow = 2)
+design_ex <- matrix(c(-1, -0.4506, -0.4474, -0.441, 0.4459, 0.448, 0.452, 1,
+                       2, 1, 1, 1, 1, 1, 1, 2), byrow = T, nrow = 2)
+design_app_tibble <- tibble(design_pt = design_app[1,], weight = design_app[2,])
+design_ex_tibble <- tibble(design_pt = design_ex[1,], n_point = design_ex[2,])
+design_app %>% kbl(., caption = "Approximate design on [-1,1].") %>% 
+  kable_paper("hover", full_width = F)
+design_ex %>% kbl(.,caption = "Exact design (n=10) on [-1,1]") %>% 
+  kable_paper("hover", full_width = F)
+```
+
+# Conclusion
+
+Since we assign weighted at $x=0$ when $\chi=[0,1]$ but do not assign weight at $x=0$ when $\chi=[-1,+1]$. Hence, we **CAANOT** do design on $\chi=[0,1]$, then extend it to the other half,  $\chi=[-1,0]$, naively.
