@@ -1,0 +1,302 @@
+---
+title: "Simulating Annealing -- Symmetric property on D-optimal designs"
+subtitle: |
+  | ABC
+author: |
+  | Chi-Kuang Yeh
+  | University of Waterloo
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  rmarkdown::html_document:
+    theme: readable
+    code_folding: hide
+    toc: true
+    toc_float: yes
+    number_sections: true
+---
+
+<!-- latex macros -->
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\ep}{\varepsilon}
+\newcommand{\E}{\mathbb E}
+
+```{r setup, message = F}
+library(tibble)
+library(dplyr)
+library(janitor) # to add the sum/total
+library(knitr)
+library(kableExtra)
+partial_deri <- function(x, w){
+  w * (c(1,x,x^2,x^3) %o% c(1,x,x^2,x^3))
+}
+
+calc_loss_poly <- function(design, p){
+  point <- design$x
+  weight <- design$weight
+  n_x <- nrow(design) 
+  FIM <- matrix(0, nrow = p+1, ncol = p+1)
+  for(i in 1:n_x){
+    # print(partial_deri(point[i], weight[i]))
+    FIM <- FIM + partial_deri(point[i], weight[i])
+  }
+  # 
+  list(Dopt = -log(det(FIM)^(1/(p+1))),
+      Aopt = sum(diag(solve(FIM)))
+  )
+}
+```
+
+With a cubic polynomial model with N=21
+
+If the design space is $\chi=[0,1]$, the optimal (approximated) design is 
+
+```{r}
+design_app <- matrix(c(0, 0.25, 0.3, 0.7, 0.75, 1,
+      0.24953,  0.11286,  0.13761, 0.13761, 0.11286, 0.24953),
+                     byrow = T, nrow = 2)
+design_ex <- matrix(c(0, 0.2747, 0.2763, 0.2795, 0.723, 0.724, 0.726, 1,
+            2, 1, 1, 1, 1, 1, 1, 2), byrow = T, nrow = 2)
+design_app_tibble <- tibble(design_pt = design_app[1,], weight = design_app[2,])
+design_ex_tibble <- tibble(design_pt = design_ex[1,], n_point = design_ex[2,])
+design_app %>% kbl(.,caption = "Approximate design on [0,1]") %>% 
+  kable_paper("hover", full_width = F)
+design_ex %>% kbl(.,caption = "Exact design (n=10) on [0,1]") %>% 
+  kable_paper("hover", full_width = F)
+```
+If the design space is $\chi=[-1,1]$, the optimal (approximated) design is 
+```{r}
+design_app <- matrix(c(-1, -0.5, -0.4, 0.4, 0.5, 1,
+                        0.24953, 0.11286, 0.13761, 0.13761, 0.11286, 0.24953),
+                        byrow = T, nrow = 2)
+design_ex <- matrix(c(-1, -0.4506, -0.4474, -0.441, 0.4459, 0.448, 0.452, 1,
+                       2, 1, 1, 1, 1, 1, 1, 2), byrow = T, nrow = 2)
+design_app_tibble <- tibble(design_pt = design_app[1,], weight = design_app[2,])
+design_ex_tibble <- tibble(design_pt = design_ex[1,], n_point = design_ex[2,])
+design_app %>% kbl(., caption = "Approximate design on [-1,1].") %>% 
+  kable_paper("hover", full_width = F)
+design_ex %>% kbl(.,caption = "Exact design (n=10) on [-1,1]") %>% 
+  kable_paper("hover", full_width = F)
+
+```
+
+# A-optimality
+
+$N = 21, n=30$
+
+```{r}
+n <- 50
+design_app <- matrix(c(-1, -0.5, -0.4, 0.4, 0.5, 1,
+                        0.15403, 0.28688, 0.059094, 0.059094, 0.28688, 0.15403),
+                     byrow = T, nrow = 2)
+design_ex <- matrix(c(-1, -0.4778, -0.4775, -0.4764, -0.4754, -0.4746, -0.4741, 
+                      -0.4734, -0.4724, -0.4718, -0.4712, -0.4691, 0.4457, 
+                      0.4484, 0.4504, 0.4522, 0.453, 0.4531, 0.4535, 0.4553,
+                      0.458, 0.4605, 1,
+                      5, 1, 1, 1, 1, 1, 1, 1, 1,  1,1, 1, 1, 1, 1, 1, 1, 1, 
+                      1,1,1,1,4),
+                    byrow = T, nrow = 2)
+design_weight <- design_ex[2,]/n
+
+res_design_app <- tibble(x = design_app[1,], n_point = NA, weight = design_app[2,])
+res_design_ex <- tibble(x = design_ex[1,], n_point = design_ex[2,], weight = design_weight)
+
+tibble(tyep = c("approx", "exact"),
+       loss = c(calc_loss_poly(res_design_app, 3)$Aopt, 
+                calc_loss_poly(res_design_ex, 3)$Aopt))
+
+res_design_app %>% rowid_to_column("ID") %>%  adorn_totals("row") %>%
+  kbl(., caption = "Approximate A-design on [-1,1]") %>%
+  kable_paper("hover", full_width = F)
+res_design_ex %>% rowid_to_column("ID") %>%  adorn_totals("row") %>%
+  kbl(., caption = "Exact A-design (n=30) on [-1,1]") %>%
+  kable_paper("hover", full_width = F)
+```
+
+# Logistic regression
+$\chi=[-1,1]^2$, $N_1 = N_2=11$, and $n=50$.
+
+```{r, eval = F, include = F}
+design_app <- matrix(c( -1, -1, 0.18746,
+                        -1, 1, 0.26431,
+                        1, -1, 0.27694,
+                        1, 1, 0.27129) , byrow = T, ncol = 3)
+design_ex <- matrix(c( -0.995,       0.7156, 1,
+                       -0.9841,       0.0234, 1,
+                       -0.9754,      -0.8151, 1,
+                       -0.9615,        0.699, 1, 
+                       -0.9492,       0.9309,            1,
+                       -0.948,       0.8542,            1,
+                       -0.9454,       0.4869,            1,
+                       -0.9253,       0.6351,            1,
+                       -0.9209,      -0.8185,            1,
+                       -0.9202,      -0.8886,            1,
+                       -0.9186,       0.7417,            1,
+                       -0.907,      -0.7475,            1,
+                       -0.9066,       0.9206,            1,
+                       -0.903,       0.9033,            1,
+                       -0.8428,      -0.6299,            1,
+                       -0.7917,       0.7817,            1,
+                       -0.7205,       0.1444,            1,
+                       -0.6765,      -0.9676,            1,
+                       -0.6438,      -0.4823,            1,
+                       -0.6264,      -0.8403,            1,
+                       -0.5828,      -0.9855,            1,
+                       -0.5682,       0.7846,            1,
+                       -0.4929,       -0.031,            1,
+                       -0.4438,       0.8747,            1,
+                       0.385,      -0.7956,            1,
+                       0.4071,            1,            1,
+                       0.4429,       0.9867,            1,
+                       0.4618,      -0.8781,            1,
+                       0.4656,       -0.579,            1,
+                       0.5103,       0.9324,            1,
+                       0.5493,      -0.7965,            1,
+                       0.5566,       0.8978,            1,
+                       0.5713,       0.9155,            1,
+                       0.6174,      -0.9465,            1,
+                       0.6185,      -0.8972,            1,
+                       0.6631,      -0.6967,            1,
+                       0.7023,       0.8554,            1,
+                       0.7247,       0.9159,            1,
+                       0.7729,      -0.6749,            1,
+                       0.8074,       -0.998,            1,
+                       0.8104,         0.92,            1,
+                       0.8376,      -0.9333,            1,
+                       0.8689,       0.7049,            1,
+                       0.8691,      0.9561,            1,
+                       0.8908,      -0.9609,            1,
+                       0.9266,      -0.9648,            1,
+                       0.9524,       0.9742,            1,
+                       0.957,        0.751,            1, 
+                       0.9862,       0.9615,            1,
+                       0.9936,      -0.8034,            1), 
+                    byrow = T, ncol = 3)
+beta <- c(-0.5, 0.7, 0.38)
+# beta = c(-0.4926, -0.6280, -0.3283)
+partial_logit <- function(x, w, beta){
+  rx <- c(1, x)
+  Gamma <- exp(t(beta) %*% rx)/(1+exp(t(beta) %*% rx ))^2
+  w * c(Gamma) * (rx %*% t(rx))
+}
+calc_loss <- function(design, beta, q){
+  point <- design[, c(1,2)]
+  weight <- design[, 3]
+  n_x <- nrow(design) 
+  n_param <- length(beta)
+  FIM <- matrix(0, nrow = q, ncol = q)
+  for(i in 1:n_x){
+    FIM <- FIM + partial_logit(point[i,c(1,2)], weight[i], beta)
+  }
+  # 
+  list(Dopt = -log(det(FIM)^(1/(n_param))),
+       Aopt = sum(diag(solve(FIM)))
+  )
+}
+design_weight <- design_ex[,3]/n
+# res_design_app <- tibble(x = design_app[1,], n_point = NA, weight = design_app[2,])
+res_design_ex <- tibble(x1 = design_ex[,1], x2 = design_ex[,2],
+                        n_point = design_ex[,3], 
+                        weight = design_weight)
+res_design_ex %>% rowid_to_column("ID") %>%  adorn_totals("row") %>% 
+  kbl() %>% kable_paper("hover", full_width = F)
+calc_loss(design = design_app, beta = beta)$Dopt
+calc_loss(design = cbind(design_ex[,-3], design_weight), beta = beta)$Dopt
+```
+
+
+# Peleg model
+
+With $\chi=[0,180]$ and $\btheta=(0.05,0.5)^\top$, the peleg model is 
+
+$$ \E y_i= y_0 + \frac{x_i}{\theta_1+\theta_2 x_i}+\ep_i,\quad i=1,\cdots,n.$$ 
+
+```{r}
+n <- 20; N <- 51
+beta <- c(0.05, 0.5)
+design_app <- matrix(c(3.6, 180,
+                       0.5, 0.5),
+                     byrow = T, nrow = 2)
+design_ex <- matrix(c(0.0861, 0.0997, 0.101, 0.1013, 0.1027, 0.1046, 0.105, 0.1056, 180,
+                      1, 1, 1, 2, 1, 1, 1, 1, 11),
+                      byrow = T, nrow = 2)
+partial_deri_peleg <- function(xi, wi, beta){
+  deno <- (beta[1] + xi * beta[2])^2
+  fxi <- c(-xi/deno, -xi^2/deno)
+  wi * fxi %o% fxi
+}
+calc_loss_peleg <- function(design, beta, q){
+  point <- design$x
+  weight <- design$weight
+  n_x <- nrow(design) 
+  FIM <- matrix(0, nrow = q, ncol = q)
+  for(i in 1:n_x){
+    FIM <- FIM + partial_deri_peleg(xi = point[i], w = weight[i], beta)
+  }
+  # 
+  list(Dopt = -log(det(FIM)^(1/q)),
+      Aopt = sum(diag(solve(FIM)))
+  )
+}
+design_app_tbl <- tibble(x = design_app[1,], weight = design_app[2,])
+design_ex_tbl <- tibble(x = design_ex[1,], weight = design_ex[2,]/n)
+
+design_weight <- design_ex[,3]/n
+design_app_tibble <- tibble(design_pt = design_app[1,], weight = design_app[2,])
+design_ex_tibble <- tibble(design_pt = design_ex[1,], n_point = design_ex[2,])
+
+design_app_tibble %>% rowid_to_column("ID") %>%  adorn_totals("row") %>%
+  kbl(., caption = "Approximate D-design of Peleg, on [-1,1]") %>%
+  kable_paper("hover", full_width = F)
+design_ex_tibble %>% rowid_to_column("ID") %>%  adorn_totals("row") %>%
+  kbl(., caption = "Exact D-design (n=20) of Peleg, on [-1,1]") %>%
+  kable_paper("hover", full_width = F)
+
+tibble(tyep = c("approx", "exact"),
+       loss = c(calc_loss_peleg(design_app_tbl, beta, q = length(beta))$Dopt, 
+                calc_loss_peleg(design_ex_tbl, beta, q = length(beta))$Dopt))
+```
+
+# MM model
+
+With $\chi=[0,180]$ and $\btheta=(0.05,0.5)^\top$, the MM model is 
+
+$$ \E y_i= \frac{\theta_1x_i}{\theta_2+x_i},\quad i=1,\cdots,n.$$ 
+
+```{r}
+n <- 20; N <- 51
+beta <- c(0.05, 0.5)
+design_app <- matrix(c(3.6, 180,
+                       0.5, 0.5),
+                     byrow = T, nrow = 2)
+design_ex <- matrix(c( 0.4781, 0.4857,0.4858, 0.4897, 0.4922, 0.494, 0.5036, 0.5135, 180,
+                       1, 1, 1, 2, 1, 1, 1, 1, 11), byrow = T, nrow = 2)
+partial_deri_mm <- function(xi, wi, beta){
+  fxi <- c(-xi/(beta[1]+beta[2*xi])^2, -xi^2/(beta[1]+beta[2]*xi)^2)
+  wi * fxi %o% fxi
+}
+calc_loss_mm <- function(design, beta, q){
+  point <- design$x
+  weight <- design$weight
+  n_x <- nrow(design) 
+  FIM <- matrix(0, nrow = q, ncol = q)
+  for(i in 1:n_x){
+    FIM <- FIM + partial_deri_mm(xi = point[i], w = weight[i], beta)
+  }
+  # 
+  list(Dopt = -log(det(FIM)^(1/q)),
+      Aopt = sum(diag(solve(FIM)))
+  )
+}
+design_app_tbl <- tibble(x = design_app[1,], weight = design_app[2,])
+design_ex_tbl <- tibble(x = design_ex[1,], weight = design_ex[2,]/n)
+design_app_tibble %>% rowid_to_column("ID") %>%  adorn_totals("row") %>%
+  kbl(., caption = "Approximate D-design of Peleg, on [-1,1]") %>%
+  kable_paper("hover", full_width = F)
+design_ex_tibble %>% rowid_to_column("ID") %>%  adorn_totals("row") %>%
+  kbl(., caption = "Exact D-design (n=20) of Peleg, on [-1,1]") %>%
+  kable_paper("hover", full_width = F)
+tibble(tyep = c("approx", "exact"),
+       loss = c(calc_loss_peleg(design_app_tbl, beta, q = length(beta))$Dopt, 
+                calc_loss_peleg(design_ex_tbl, beta, q = length(beta))$Dopt))
+```
+
