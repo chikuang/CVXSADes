@@ -7,8 +7,8 @@ runningtime=cputime;  %record computation time
 beta = [-0.5, 0.7, 0.38]';
 % beta = [-0.4926, -0.6280, -0.3283]';
 
-rng('default')
-S1 = [-1, +1]; % Design space in each dimension
+% rng('default')
+S1 = [-1,+1]; % Design space in each dimension
 p = 2; % Dimension
 N1 = 11; % Number of design points of each dimension
 N = N1^p;
@@ -43,7 +43,8 @@ cvx_precision best
   end
   
   % -log_det(I_design) <= del;
-  minimize(-log_det(M))
+  % minimize(-log_det(M))
+  minimize (-log(det_rootn(M)))
   ones(N, 1)' * w == 1;
   -w <= zeros(N, 1);
 cvx_end
@@ -76,7 +77,7 @@ d0 = design_app(:,1:(end-1));
 w0 = w01;
 
 
-k=length(w0); 
+k = length(w0); 
 
 % calculate the FIM and objective function value for this exact design
 FIM = zeros(q, q);
@@ -190,11 +191,11 @@ end
 %% 4. PLOTTING RESULTS
 
 % Plot loss
-figure;
-plot(1:num_iters,loss(1:num_iters));
-xlabel("Iteration");
-ylabel("Loss");
-title("Annealing Schedule");
+% figure;
+% plot(1:num_iters,loss(1:num_iters));
+% xlabel("Iteration");
+% ylabel("Loss");
+% title("Annealing Schedule");
 
 loss1 = loss(1:num_iters);
 
@@ -206,14 +207,14 @@ n_count = groupcounts(design_ex_temp(:,1:(end-1)));
 sum(w0)
 design_ex = [val, n_count];
 
-figure; 
-% scatter(d0,n*w0,"blue");
-hist3(design_ex(:,1:(end-1)))
-xlabel("Design space");
-ylabel("Frequency");
-title("Exact design distribution (n = " + size(design_ex(:,1),1) + ")")
-ax = gca;
-ax.YTick = unique( round(ax.YTick) );
+% figure; 
+% % scatter(d0,n*w0,"blue");
+% hist3(design_ex(:,1:(end-1)))
+% xlabel("Design space");
+% ylabel("Frequency");
+% title("Exact design distribution (n = " + size(design_ex(:,1),1) + ")")
+% ax = gca;
+% ax.YTick = unique( round(ax.YTick) );
 
 resulttime = cputime-runningtime  %computation time
 
