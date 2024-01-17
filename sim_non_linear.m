@@ -1,17 +1,31 @@
 clear;
-criterion = "A";
+criterion = "D";
+
+%%% Peleg model from 2015 Peleg paper
 f = @peleg; % function
+a = 0;  %[a, b] is the design space
+b = 180;
+beta = [0.5, 0.05]'; %peleg
 % runningtime = cputime;  %record computation time
+
+%%% MM model from Yin and Zhou 2017
+% f = @mm;
+% a =  0;  
+% b =  4;
+% beta = [1,1]';
+
+%%% arrhenius, from Berger and Wong's book
+% f = @arrhenius;
+% a = 273;
+% b = 373;
+% beta = [10, 65/8.314]
+
 
 %% 0. Initialization
 tol = 1E-4; % for finding and filtering out the points 
 tol_annealing = 1E-40;
-N = 1001;  % number of design points for initial design
-  
-a =  0;   %[a, b] is the design space
-b =   180;  
-% beta = [0.05, 0.5]';
-beta = [0.5, 0.05]';
+N = 21;  % number of design points for initial design
+ 
 q = length(beta);  
 % q = p+1; % how many beta's (degree + 1 intercept term)
 u = linspace(a, b, N); %equally spaced N points in [a,b]
@@ -35,6 +49,7 @@ cvx_begin
   else
     fprintf('Does not run.');
   end
+  % minimize (-log(det_rootn(A)))
   0 <= w <= 1;
   sum(w)==1;
 cvx_end
@@ -47,7 +62,7 @@ L00 = cvx_optval; % optimal objective value
 
 %% 2. Find n exact design points using an annealing algorithm with the
 % following setting
-n = 20; % number of support point in the exact design
+n = 10; % number of support point in the exact design
 c0 = 1; % max number of points to be changed in the annealing algorithm
 Nt = 200; % number of iterations per temperature change
 T0 = 0.1; % initial temperature
