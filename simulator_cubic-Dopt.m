@@ -6,7 +6,7 @@ clear;
 %% 0. Initialization
 tol = 1E-4; % for finding and filtering out the points 
 tol_annealing = 1E-40;
-N = 51;  % number of design points for initial design
+N = 21;  % number of design points for initial design
   
 a =  -1;   %[a, b] is the design space
 b =   1;  
@@ -45,7 +45,7 @@ L00 = cvx_optval; % optimal objective value
 
 %% 2. Find n exact design points using an annealing algorithm with the
 % following setting
-n = 18; % number of support point in the exact design
+n = 20; % number of support point in the exact design
 c0 = 1; % max number of points to be changed in the annealing algorithm
 Nt = 200; % number of iterations per temperature change
 T0 = 0.1; % initial temperature
