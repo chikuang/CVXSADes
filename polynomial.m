@@ -2,7 +2,7 @@
  
 clear;
 runningtime = cputime;  %record computation time
-
+criterion = "D";
 %% 0. Initialization
 tol = 1E-4; % for finding and filtering out the points 
 tol_annealing = 1E-40;
@@ -31,8 +31,13 @@ cvx_begin
     A = A + (f1 * f1') * w(j);
   end
     
-  %minimize( trace_inv(A) )   %A-opt
-  minimize (-log(det_rootn(A)))
+  if criterion == "D"
+    minimize (-log(det_rootn(A)));
+  elseif criterion == "A"
+    minimize( trace_inv(A) );   %A-opt
+  else
+    fprintf('Does not run.');
+  end
   0 <= w <= 1;
   sum(w)==1;
 cvx_end

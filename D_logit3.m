@@ -2,7 +2,8 @@
 %%with exact n points
  
 clear;
-runningtime=cputime;  %record computation time
+criterion = "D";
+% runningtime=cputime;  %record computation time
 
 beta = [-0.5, 0.7, 0.38]';
 % beta = [-0.4926, -0.6280, -0.3283]';
@@ -42,9 +43,13 @@ cvx_precision best
       M = M + w(i) * Gamma * (rx * rx');
   end
   
-  % -log_det(I_design) <= del;
-  % minimize(-log_det(M))
-  minimize (-log(det_rootn(M)))
+  if criterion == "D"
+    minimize (-log(det_rootn(M)));
+  elseif criterion == "A"
+    minimize( trace_inv(M) );   %A-opt
+  else
+    fprintf('Does not run.');
+  end
   ones(N, 1)' * w == 1;
   -w <= zeros(N, 1);
 cvx_end
@@ -81,13 +86,21 @@ k = length(w0);
 
 % calculate the FIM and objective function value for this exact design
 FIM = zeros(q, q);
-for j = 1:size(design_app,1)   
+for j = 1:size(design_app, 1)   
   xx = d0(j,:);
   rx = [1, xx]';
   Gamma = exp(beta' * rx)/(1+exp(beta' * rx))^2;
   FIM = FIM + w0(j) * Gamma * (rx * rx');
 end
-L0 = -log(det(FIM)^(1/q));  %D-optimality
+if criterion == "D"
+  L0 = -log(det(FIM)^(1/q));
+elseif criterion == "A"
+  L0 = trace(inv(FIM));   %A-opt
+else
+  fprintf('Does not run.');
+end
+
+  %D-optimality
 
 % store loss at each iteration for plotting
 loss = zeros(1,M0*Nt);
@@ -171,8 +184,13 @@ while(T > Tmin && abs(L_prev - L0) > tol_annealing )
       Gamma = exp(beta' * rx)/(1+exp(beta' * rx))^2;
       FIMi = FIMi + Gamma * (rx * rx') * w0(j);
     end
-    
-    Li = -log(det(FIMi)^(1/q));
+    if criterion == "D"
+      Li = -log(det(FIMi)^(1/q));
+    elseif criterion == "A"
+      Li = trace(inv(FIMi));   %A-opt
+    else
+      fprintf('Does not run.');
+    end
  
     % PROCEED WITH ANNEALING STEP
     prob = exp(-(Li-L0)/T); % acceptance probability
@@ -216,7 +234,7 @@ design_ex = [val, n_count];
 % ax = gca;
 % ax.YTick = unique( round(ax.YTick) );
 
-resulttime = cputime-runningtime  %computation time
+% resulttime = cputime-runningtime  %computation time
 
 design_app
 design_ex
