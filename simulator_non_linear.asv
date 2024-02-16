@@ -1,18 +1,23 @@
 clear;
 criterion = "D";
 
+n = 10; % number of support point in the exact design
+N = 1001;  % number of design points for initial design
+Nsim = 500;
+LOSS = zeros(Nsim, 2);
+
 %%% Peleg model from 2015 Peleg paper
-f = @peleg; % function
-a = 0;  %[a, b] is the design space
-b = 180;
-beta = [0.5, 0.05]'; %peleg
+% f = @peleg; % function
+% a = 0;  %[a, b] is the design space
+% b = 180;
+% beta = [0.5, 0.05]'; %peleg
 % runningtime = cputime;  %record computation time
 
 %%% MM model from Yin and Zhou 2017
-% f = @mm;
-% a =  0;  
-% b =  4;
-% beta = [1,1]';
+f = @mm;
+a =  0;  
+b =  4;
+beta = [1,1]';
 
 %%% arrhenius, from Berger and Wong's book
 % f = @arrhenius;
@@ -24,7 +29,7 @@ beta = [0.5, 0.05]'; %peleg
 %% 0. Initialization
 tol = 1E-4; % for finding and filtering out the points 
 tol_annealing = 1E-40;
-N = 21;  % number of design points for initial design
+
  
 q = length(beta);  
 % q = p+1; % how many beta's (degree + 1 intercept term)
@@ -32,7 +37,7 @@ u = linspace(a, b, N); %equally spaced N points in [a,b]
 
 %% 1. Compute the initial proxy approximate design 
 cvx_begin
-  cvx_precision high
+  cvx_precision best
   variable w(1,N);
   expression A(q,q); 
   
@@ -62,7 +67,7 @@ L00 = cvx_optval; % optimal objective value
 
 %% 2. Find n exact design points using an annealing algorithm with the
 % following setting
-n = 10; % number of support point in the exact design
+
 c0 = 1; % max number of points to be changed in the annealing algorithm
 Nt = 200; % number of iterations per temperature change
 T0 = 0.1; % initial temperature
@@ -73,13 +78,11 @@ Tmin = T0 * alpha^M0; %minimum temperature
 
 delta = 2*(b-a)/(N-1); % neighbourhood size, in this setting, it is 0.2
 
-Nsim = 500;
-LOSS = zeros(Nsim, 2);
-
 for ell=1:Nsim 
   disp(ell)
   rng(ell);  %random seed number
   % rng(202)
+  % w01 = initializeExact2(w00, n); %convert approximate design lazily to an exact design
   w01 = initializeExact(w00, n); %convert approximate design lazily to an exact design
   d0 = design_app(1,:);
   w0 = w01;
@@ -209,4 +212,7 @@ for ell=1:Nsim
   design_ex = [val, n_count]';
   LOSS(ell,:) = [ell, loss1(end)];
 end
-  
+
+sortrows(LOSS, 2, "descend");
+L00
+min(LOSS(:,2))

@@ -1,38 +1,60 @@
-%%Compute D-optimal designs for polynomial regression with exact n points
- 
 clear;
+criterion = "D";
+
+n = 10; % number of support point in the exact design
+N = 1001;  % number of design points for initial design
+Nsim = 500;
+LOSS = zeros(Nsim, 2);
+
+%%% Peleg model from 2015 Peleg paper
+% f = @peleg; % function
+% a = 0;  %[a, b] is the design space
+% b = 180;
+% beta = [0.5, 0.05]'; %peleg
 % runningtime = cputime;  %record computation time
+
+%%% MM model from Yin and Zhou 2017
+f = @mm;
+a =  0;  
+b =  4;
+beta = [1,1]';
+
+%%% arrhenius, from Berger and Wong's book
+% f = @arrhenius;
+% a = 273;
+% b = 373;
+% beta = [10, 65/8.314]
+
 
 %% 0. Initialization
 tol = 1E-4; % for finding and filtering out the points 
 tol_annealing = 1E-40;
-N = 21;  % number of design points for initial design
-  
-a =  -1;   %[a, b] is the design space
-b =   1;  
-p = 3;            % degree of polynomial regression model  
-q = p+1; % how many beta's (degree + 1 intercept term)
+
+ 
+q = length(beta);  
+% q = p+1; % how many beta's (degree + 1 intercept term)
 u = linspace(a, b, N); %equally spaced N points in [a,b]
-
-
-% The following vectors and matrices are used in the information
-% matrices below.
-f = power(u(:), 0:p);          
 
 %% 1. Compute the initial proxy approximate design 
 cvx_begin
-  cvx_precision high
+  cvx_precision best
   variable w(1,N);
   expression A(q,q); 
   
   % here we compute the information matrix at
   for j=1:N
-    f1 = f(j,:)';      
-    A = A + (f1 * f1') * w(j);
+    f1 = f(u(j), beta);      
+    A = A + w(j) * (f1 * f1');
   end
     
-  %minimize( trace_inv(A) )   %A-opt
-  minimize (-log(det_rootn(A)))
+  if criterion == "D"
+    minimize (-log(det_rootn(A)));
+  elseif criterion == "A"
+    minimize( trace_inv(A) );   %A-opt
+  else
+    fprintf('Does not run.');
+  end
+  % minimize (-log(det_rootn(A)))
   0 <= w <= 1;
   sum(w)==1;
 cvx_end
@@ -45,7 +67,7 @@ L00 = cvx_optval; % optimal objective value
 
 %% 2. Find n exact design points using an annealing algorithm with the
 % following setting
-n = 20; % number of support point in the exact design
+
 c0 = 1; % max number of points to be changed in the annealing algorithm
 Nt = 200; % number of iterations per temperature change
 T0 = 0.1; % initial temperature
@@ -56,29 +78,33 @@ Tmin = T0 * alpha^M0; %minimum temperature
 
 delta = 2*(b-a)/(N-1); % neighbourhood size, in this setting, it is 0.2
 
-Nsim = 500;
-LOSS = zeros(Nsim, 2);
-
 for ell=1:Nsim 
   disp(ell)
   rng(ell);  %random seed number
   % rng(202)
+  % w01 = initializeExact2(w00, n); %convert approximate design lazily to an exact design
   w01 = initializeExact(w00, n); %convert approximate design lazily to an exact design
   d0 = design_app(1,:);
   w0 = w01;
   
   
   k = length(w0); 
-  
-  FIM_temp = FIM_polyP(d00, p);
-  
+
   FIM = zeros(q, q);
   for j=1:size(design_app,2)    
-    FIM = FIM + FIM_temp(:,:,j) * w0(j);
+    x = design_app(1,j);
+    fx = f(x, beta);
+    wj = design_app(2,j);
+    FIM = FIM + wj * (fx * fx');
   end
   
-  
-  L0 = -log(det(FIM)^(1/q));  %D-optimality
+  if criterion == "D"
+    L0 = -log(det(FIM)^(1/q));  %D-optimality
+  elseif criterion == "A"
+    L0 = trace(inv(FIM));  %D-optimalityminimize( trace_inv(A) )   %A-opt
+  else
+    fprintf('Does not run.')
+  end
   
   % store loss at each iteration for plotting
   loss = zeros(M0*Nt,1);
@@ -146,18 +172,21 @@ for ell=1:Nsim
       % remove support points with zero weight
       di = di(wi>tol);
       wi = wi(wi>tol);
-      
-      % compute loss of candidate design
-      % FIMi = FIM_polyP(di, p);
-      % FIMi = sum(FIMi.*reshape(wi,1,1,[]),3);
-      FIMi_temp = FIM_polyP(di, p);
-  
+        
       FIMi = zeros(q, q);
-      for j=1:length(wi)   
-        FIMi = FIMi + FIMi_temp(:,:,j) * wi(j);
+      for j=1:length(wi)
+        x = di(j);
+        fx = f(x, beta);
+        FIMi = FIMi + wi(j) * (fx * fx');
       end
       
-      Li = -log(det(FIMi)^(1/q));
+      if criterion == "D"
+        Li = -log(det(FIMi)^(1/q));  %D-optimality
+      elseif criterion == "A"
+        Li = trace(inv(FIMi));  %D-optimality
+      else
+        fprintf('Does not run.')
+      end
    
       % PROCEED WITH ANNEALING STEP
       prob = exp(-(Li-L0)/T); % acceptance probability
@@ -183,4 +212,7 @@ for ell=1:Nsim
   design_ex = [val, n_count]';
   LOSS(ell,:) = [ell, loss1(end)];
 end
-  
+
+sortrows(LOSS, 2, "descend");
+L00
+min(LOSS(:,2))

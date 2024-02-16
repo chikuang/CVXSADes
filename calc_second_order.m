@@ -1,5 +1,3 @@
-%%Compute D-optimal designs for polynomial regression with exact n points
- 
 clear;
 runningtime = cputime;  %record computation time
 criterion = "A";
@@ -49,7 +47,7 @@ L00 = cvx_optval; % optimal objective value
 
 %% 2. Find n exact design points using an annealing algorithm with the
 % following setting
-n = 21; % number of support point in the exact design
+n = 15; % number of support point in the exact design
 c0 = 1; % max number of points to be changed in the annealing algorithm
 Nt = 200; % number of iterations per temperature change
 T0 = 0.1; % initial temperature
@@ -74,8 +72,16 @@ for j=1:size(design_app,1)
   FIM = FIM + (fj * fj') *  w0(j);
 end
 
+if criterion == "D"
+  L0 =  -log(det(FIM)^(1/q));
+elseif criterion == "A"
+  L0 = trace(inv(FIM));   %A-opt
+else
+  fprintf('Does not run.');
+end
 
-L0 = -log(det(FIM)^(1/q));  %D-optimality
+
+% L0 = -log(det(FIM)^(1/q));  %D-optimality
 
 % store loss at each iteration for plotting
 loss = zeros(M0*Nt,1);
@@ -91,7 +97,7 @@ loss(1) = L0;
 
 % rng(523803);  %random seed number
 
-rng(555);  %random seed number
+% rng(555);  %random seed number
 num_iters = 1;
 T = T0;
 L_prev = 0;
@@ -161,7 +167,13 @@ while(T > Tmin && abs(L_prev - L0) > tol_annealing )
       FIMi = FIMi + (fj * fj') * wi(j);
     end
     
-    Li = -log(det(FIMi)^(1/q));
+    if criterion == "D"
+      Li =  -log(det(FIMi)^(1/q));
+    elseif criterion == "A"
+      Li = trace(inv(FIMi));   %A-opt
+    else
+      fprintf('Does not run.');
+    end
  
     % PROCEED WITH ANNEALING STEP
     prob = exp(-(Li-L0)/T); % acceptance probability
