@@ -1,38 +1,39 @@
-%%Compute D-optimal designs for polynomial regression with exact n points
- 
 clear;
-% runningtime = cputime;  %record computation time
+criterion = "D";
+
+n = 10; % number of support point in the exact design
+N = 1001;  % number of design points for initial design
+Nsim = 500;
+LOSS = zeros(Nsim, 2);
+
+beta = [0.9506, 2.0434]';
+a =  0;  
+b =  4;
 
 %% 0. Initialization
 tol = 1E-4; % for finding and filtering out the points 
 tol_annealing = 1E-40;
-N = 21;  % number of design points for initial design
-n = 20; % number of support point in the exact design
-a =  -1;   %[a, b] is the design space
-b =   1;  
-p = 3;            % degree of polynomial regression model  
-q = p+1; % how many beta's (degree + 1 intercept term)
+
+ 
+q = length(beta);  
+% q = p+1; % how many beta's (degree + 1 intercept term)
 u = linspace(a, b, N); %equally spaced N points in [a,b]
-
-
-% The following vectors and matrices are used in the information
-% matrices below.
-f = power(u(:), 0:p);          
 
 %% 1. Compute the initial proxy approximate design 
 cvx_begin
-  cvx_precision high
+  cvx_precision best
   variable w(1,N);
-  expression A(q,q); 
+  expression M(q,q); 
   
   % here we compute the information matrix at
-  for j=1:N
-    f1 = f(j,:)';      
-    A = A + (f1 * f1') * w(j);
-  end
-    
-  %minimize( trace_inv(A) )   %A-opt
-  minimize (-log(det_rootn(A)))
+   for i = 1:N
+      xx = u(i);
+      rx = [1, xx]';
+      Gamma = exp(beta' * rx)/(1+exp(beta' * rx))^2;
+      M = M + w(i) * Gamma * (rx * rx');
+   end
+  
+  minimize (-log(det_rootn(M)));
   0 <= w <= 1;
   sum(w)==1;
 cvx_end
@@ -56,30 +57,29 @@ Tmin = T0 * alpha^M0; %minimum temperature
 
 delta = 2*(b-a)/(N-1); % neighbourhood size, in this setting, it is 0.2
 
-Nsim = 500;
-LOSS = zeros(Nsim, 2);
-
 for ell=1:Nsim 
   disp(ell)
   rng(ell);  %random seed number
   % rng(202)
+  % w01 = initializeExact2(w00, n); %convert approximate design lazily to an exact design
   w01 = initializeExact(w00, n); %convert approximate design lazily to an exact design
   d0 = design_app(1,:);
   w0 = w01;
   
   
   k = length(w0); 
-  
-  FIM_temp = FIM_polyP(d00, p);
-  
+
   FIM = zeros(q, q);
-  for j=1:size(design_app,2)    
-    FIM = FIM + FIM_temp(:,:,j) * w0(j);
+  for j = 1:size(design_app, 1)   
+    xx = d0(j);
+    rx = [1, xx]';
+    Gamma = exp(beta' * rx)/(1+exp(beta' * rx))^2;
+    wj = w0(j);
+    FIM = FIM + wj * Gamma * (rx * rx');
   end
   
-  
-  L0 = trace(inv(FIM));   %D-optimality
-  
+ 
+    L0 = -log(det(FIM)^(1/q));  %D-optimality
   % store loss at each iteration for plotting
   loss = zeros(M0*Nt,1);
   loss(1) = L0;
@@ -146,19 +146,19 @@ for ell=1:Nsim
       % remove support points with zero weight
       di = di(wi>tol);
       wi = wi(wi>tol);
-      
-      % compute loss of candidate design
-      % FIMi = FIM_polyP(di, p);
-      % FIMi = sum(FIMi.*reshape(wi,1,1,[]),3);
-      FIMi_temp = FIM_polyP(di, p);
-  
+        
       FIMi = zeros(q, q);
-      for j=1:length(wi)   
-        FIMi = FIMi + FIMi_temp(:,:,j) * wi(j);
+      for j=1:length(wi)
+        xx = di(j);
+
+        rx = [1, xx]';
+        Gamma = exp(beta' * rx)/(1+exp(beta' * rx))^2;
+        wj = wi(j);
+        FIMi = FIMi + wj * Gamma * (rx * rx');
       end
       
-      Li = trace(inv(FIMi));
-   
+      Li = -log(det(FIMi)^(1/q));  %D-optimality
+        
       % PROCEED WITH ANNEALING STEP
       prob = exp(-(Li-L0)/T); % acceptance probability
       if prob > rand(1) % criterion for accepting random design
@@ -183,4 +183,9 @@ for ell=1:Nsim
   design_ex = [val, n_count]';
   LOSS(ell,:) = [ell, loss1(end)];
 end
-  
+
+design_app
+design_ex
+L_val = [L00, loss1(1), loss1(end)].';
+rowname = {'Approx', 'Exact (initial)', 'Exact (Final)'}.';
+table(L_val, 'RowNames', rowname)
