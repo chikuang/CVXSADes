@@ -1,4 +1,4 @@
-function FIM_polyP = FIM_1dregP3(x, p)
+function FIM_polyP = FIM_polyP(x, p)
   % fim_3dlinreg(x): return Fisher Information Matrix terms given design space x
   % for a 3D linear regression model
   Z = power(x(:), 0:p);  
