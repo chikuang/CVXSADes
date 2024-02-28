@@ -1,11 +1,11 @@
 clear;
 runningtime = cputime;  %record computation time
-criterion = "A";
+criterion = "D";
 %% 0. Initialization
 tol = 1E-4; % for finding and filtering out the points 
 tol_annealing = 1E-40;
 
-S1 = [0, 5]; % Design space in each dimension
+S1 = [0, 1]; % Design space in each dimension
 p = 2; % Dimension
 N1 = 21; % Number of design points of each dimension
 N = N1^p;
@@ -14,16 +14,18 @@ X = cell(1, p);
 X(:) = {linspace(S1(1), S1(2), N1)};
 u = sortrows(combvec(X{:}).') ; 
 q = 6;
+
+ff = @secondOrder;
 %% 1. Compute the initial proxy approximate design 
-cvx_begin
+cvx_begin quiet
   cvx_precision high
-  variable w(1,N);
+  variable w(1, N);
   expression A(q,q); 
   
   % here we compute the information matrix at
-  for j=1:N
-    xj = u(j,:);
-    fj = second_order(xj);
+  for j =1:N
+    xj = u(j, :);
+    fj = ff(xj);
     A = A + (fj * fj') * w(j);
   end
     
@@ -38,16 +40,18 @@ cvx_begin
   sum(w)==1;
 cvx_end
 
+
 % organizing the result
 kk = find(w > tol); % because the computer does not have exact zero
 design_app = [u(kk,:), w(kk)']; %optimal design 
 d00 = design_app(:,1:end-1); % support points
 w00 = design_app(:,end); % optimal weight
 L00 = cvx_optval; % optimal objective value
+cvx_status
 
 %% 2. Find n exact design points using an annealing algorithm with the
 % following setting
-n = 15; % number of support point in the exact design
+n = 16; % number of support point in the exact design
 c0 = 1; % max number of points to be changed in the annealing algorithm
 Nt = 200; % number of iterations per temperature change
 T0 = 0.1; % initial temperature
@@ -56,7 +60,7 @@ alpha = 0.9;  %temperature cooling rate
 
 Tmin = T0 * alpha^M0; %minimum temperature
 
-delta = 2*(S1(2)-S1(1))/(N-1); %neighbourhood size
+delta = 2*(S1(2)-S1(1))/(N1-1); %neighbourhood size
 
 % w01 = initializeExact2(w00, n); %convert approximate design lazily to an exact design
 w01 = initializeExact(w00, n); %convert approximate design lazily to an exact design
@@ -66,9 +70,9 @@ w0 = w01;
 k = length(w0); 
 
 FIM = zeros(q, q);
-for j=1:size(design_app,1)    
+for j=1:length(d0)   
   xj = d0(j,:);
-  fj = second_order(xj);
+  fj = ff(xj);
   FIM = FIM + (fj * fj') *  w0(j);
 end
 
@@ -113,9 +117,7 @@ while(T > Tmin && abs(L_prev - L0) > tol_annealing )
     % creating new candidate design
     wi = zeros(k+ci, 1); 
     di = zeros(size(d0,1)+ci, size(d0,2)); % ! This will be depends on the dimension
-  
-    
-    
+
     % copy previous design
     wi(1:k) = w0;
     di(1:k,:) = d0;
@@ -163,7 +165,7 @@ while(T > Tmin && abs(L_prev - L0) > tol_annealing )
     FIMi = zeros(q, q);
     for j=1:length(wi)   
       xj = di(j,:);
-      fj = second_order(xj);
+      fj = ff(xj);
       FIMi = FIMi + (fj * fj') * wi(j);
     end
     
@@ -191,13 +193,6 @@ end
 
 %% 4. PLOTTING RESULTS
 
-% Plot loss
-figure;
-plot(1:num_iters,loss(1:num_iters));
-xlabel("Iteration");
-ylabel("Loss");
-title("Annealing Schedule");
-
 loss1 = loss(1:num_iters);
 
 % here, we group the values that are the same together
@@ -207,17 +202,6 @@ val = unique(design_ex_temp(:,1:(end-1)),'rows');
 n_count = groupcounts(design_ex_temp(:,1:(end-1)));
 sum(w0)
 design_ex = [val, n_count];
-
-figure; 
-% scatter(d0,n*w0,"blue");
-histogram(d0, 20, "EdgeColor", "red")
-xlabel("Design space");
-ylabel("Frequency");
-title("Exact design distribution (n = " + sum(design_ex(2,:)) + ")")
-ax = gca;
-ax.YTick = unique(round(ax.YTick) );
-
-resulttime = cputime-runningtime  %computation time
 
 design_app 
 design_ex
