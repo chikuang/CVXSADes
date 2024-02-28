@@ -4,7 +4,7 @@ criterion = "D";
 %% 0. Initialization
 tol = 1E-4; % for finding and filtering out the points 
 tol_annealing = 1E-40;
-Nsim = 20;
+Nsim = 10;
 
 % S1 = [0, 5]; % Design space in each dimension
 % S1 = [175, 275];
@@ -12,8 +12,8 @@ Nsim = 20;
 S1 = [-2, +2];
 S2 = [-2, +2];
 p = 2; % Dimension
-N1 = 21; % Number of design points of each dimension
-N2 = 21;
+N1 = 31; % Number of design points of each dimension
+N2 = 31;
 N = N1*N2;
 %% Generate multi-dimensional space (using some Matlab tricks)
 X = cell(1, p);
@@ -54,8 +54,6 @@ L00 = cvx_optval; % optimal objective value
 
 %% 2. Find n exact design points using an annealing algorithm with the
 % following setting
-%% 2. Find n exact design points using an annealing algorithm with the
-% following setting
 n = 9; % number of support point in the exact design
 c0 = 1; % max number of points to be changed in the annealing algorithm
 Nt = 200; % number of iterations per temperature change
@@ -74,7 +72,8 @@ LOSS = zeros(Nsim, 2);
 
 for ell=1:Nsim 
   disp(ell)
-  % rng(ell);  %random seed number
+  rng(ell);  %random seed number
+  % rng(7)
   % rng(202)
   % w01 = initializeExact2(w00, n); % convert approximate design, but
   % retain the number of design points
