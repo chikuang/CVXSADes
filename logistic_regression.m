@@ -1,18 +1,18 @@
 %% Compute D-optimal designs for logistic regression
 %%with exact n points
  
-clear;
-criterion = "D";
-% runningtime=cputime;  %record computation time
+criterion = "A";
 
-beta = [-0.5, 0.7, 0.38]';
+% beta = [-0.5, 0.7, 0.38]';
 % beta = [-0.4926, -0.6280, -0.3283]';
-
-% rng('default')
-S1 = [-1,+1]; % Design space in each dimension
+% beta = [3, 0.5, 0.75]';
+beta = [-0.550, -0.157, 0.194]'; % values used in p186, Berger and Wong.
+S1 = [-40, +40]; 
+S2 = [-40, +40]; 
 p = 2; % Dimension
-N1 = 11; % Number of design points of each dimension
+N1 = 201; % Number of design points of each dimension
 N = N1^p;
+n = 15; 
 
 %% Generate multi-dimensional space (using some Matlab tricks)
 X = cell(1, p);
@@ -22,14 +22,13 @@ u = sortrows(combvec(X{:}).') ;
 %% 0. Initialization
 tol = 10^(-4); % for finding and filtering out the points 
 tol_annealing = 1E-40;
-% N = 21;  % number of design points for initial design
 q = length(beta);
 
 %The following vectors and matrices are used in the information
 %matrices below.
 
 %% Step 2, calculate ethe optimal design of in S_t
-cvx_begin
+cvx_begin quiet
 cvx_precision best
   % variables wk(Np, 1) del(1) 
   variable w(N)
@@ -43,7 +42,7 @@ cvx_precision best
       M = M + w(i) * Gamma * (rx * rx');
   end
   
-  if criterion == "D"
+   if criterion == "D"
     minimize (-log(det_rootn(M)));
   elseif criterion == "A"
     minimize( trace_inv(M) );   %A-opt
@@ -58,24 +57,24 @@ cvx_end
 % organizing the result
 kk = find(w > tol); % because the computer does not have exact zero
 design_app = [u(kk,:), w(kk)]; %optimal design 
-d00 = design_app(:,1:end-1); % support points
-w00 = design_app(:,end); % optimal weight
+d00 = design_app(:, 1:end-1); % support points
+w00 = design_app(:, end); % optimal weight
 L00 = cvx_optval; % optimal objective value
+cvx_status
 
 
 %Find n exact design points using an annealing algorithm with the
 %following setting
-n = 50; 
 c0 = 1; %max number of points to be changed in the annealing algorithm
 Nt = 200; %number of iterations per temperature change
-T0 = 200; %initial temperature
+T0 = 500; %initial temperature
 M0 = 10000; %number of temperature changes before algorithm stops
 alpha = 0.9;  %temperature cooling rate
 
 Tmin = T0*alpha^M0; %minimum temperature
 
 %% ! This part needs to be changed
-delta = 2*(S1(2)-S1(1))/(N-1); %neighbourhood size
+delta = (S1(2)-S1(1))/(N1-1); %neighbourhood size
 
 w01 = initializeExact(w00, n); %convert approximate design lazily to an exact design
 d0 = design_app(:,1:(end-1));
@@ -87,7 +86,7 @@ k = length(w0);
 % calculate the FIM and objective function value for this exact design
 FIM = zeros(q, q);
 for j = 1:size(design_app, 1)   
-  xx = d0(j,:);
+  xx = d0(j, :);
   rx = [1, xx]';
   Gamma = exp(beta' * rx)/(1+exp(beta' * rx))^2;
   FIM = FIM + w0(j) * Gamma * (rx * rx');
@@ -103,7 +102,7 @@ end
   %D-optimality
 
 % store loss at each iteration for plotting
-loss = zeros(1,M0*Nt);
+loss = zeros(1, M0*Nt);
 loss(1) = L0;
 
 %% ANNEALING ALGORITTHM
@@ -120,7 +119,6 @@ T = T0;
 L_prev = 0;
 
 while(T > Tmin && abs(L_prev - L0) > tol_annealing )
-% while(T > Tmin)
   L_prev = L0;
   % GENERATING RANDOM CANDIDATE DESIGN
   for h = 1:Nt
@@ -130,7 +128,7 @@ while(T > Tmin && abs(L_prev - L0) > tol_annealing )
     
     % creating new candidate design
     wi = zeros(k+ci, 1); 
-    di = zeros(size(d0,1)+ci, size(d0,2)); % ! This will be depends on the dimension
+    di = zeros(size(d0,1) + ci, size(d0, 2)); % ! This will be depends on the dimension
     
     % copy previous design
     wi(1:k) = w0;
@@ -153,18 +151,18 @@ while(T > Tmin && abs(L_prev - L0) > tol_annealing )
     i = 1;
     for j = toRemove
       % $ delta is the neighbour
-      dx = unifrnd(-1,1)*delta;
-      dy = unifrnd(-1,1)*delta;
+      d_d1 = unifrnd(-1,1) * delta;
+      d_d2 = unifrnd(-1,1) * delta;
       
-      di_nb = zeros(2,1);
-      di_nb(1) = di(j,1) + dx;
-      di_nb(1) = min([max([S1(1), di_nb(1)]),S1(2)]);
-      di_nb(2) = di(j,2) + dy;
-      di_nb(2) = min([max([S1(1), di_nb(2)]),S1(2)]);
+      di_nb = zeros(1,2);
+      di_nb(1) = di(j,1) + d_d1;
+      di_nb(1) = min([max([S1(1), di_nb(1)]),S1(2)]); 
+      di_nb(2) = di(j,2) + d_d2;
+      di_nb(2) = min([max([S2(1), di_nb(2)]),S2(2)]);
       % di_nb = di(j) + unifrnd(-1,1)*delta; % ! check this neighbour definition
 
       % ! actually here we can use the rejection proposal kind of approach
-      di(k+i,:) = di_nb;
+      di(k+i, :) = di_nb;
       i = i + 1; 
     end
     % points are generated in a circular, spherical, or hyperspherical
@@ -178,13 +176,15 @@ while(T > Tmin && abs(L_prev - L0) > tol_annealing )
     % compute loss of candidate design
 
     FIMi = zeros(q, q);
-    for j=1:size(design_app,2)   
+    for j = 1:length(wi)
       xx = di(j, :);
       rx = [1, xx]';
       Gamma = exp(beta' * rx)/(1+exp(beta' * rx))^2;
-      FIMi = FIMi + Gamma * (rx * rx') * w0(j);
+      FIMi = FIMi + Gamma * (rx * rx') * wi(j);
     end
-    if criterion == "D"
+
+
+     if criterion == "D"
       Li = -log(det(FIMi)^(1/q));
     elseif criterion == "A"
       Li = trace(inv(FIMi));   %A-opt
@@ -215,29 +215,18 @@ end
 % ylabel("Loss");
 % title("Annealing Schedule");
 
-loss1 = loss(1:num_iters);
+loss1 = loss(2:num_iters);
 
 % here, we group the values that are the same together
 design_ex_temp = round(sortrows([d0, w0]),4);
 % table(design_ex)
 val = unique(design_ex_temp(:,1:(end-1)),'rows');
-n_count = groupcounts(design_ex_temp(:,1:(end-1)));
+n_count = groupcounts(design_ex_temp(:, 1:(end-1)));
 sum(w0)
 design_ex = [val, n_count];
-
-% figure; 
-% % scatter(d0,n*w0,"blue");
-% hist3(design_ex(:,1:(end-1)))
-% xlabel("Design space");
-% ylabel("Frequency");
-% title("Exact design distribution (n = " + size(design_ex(:,1),1) + ")")
-% ax = gca;
-% ax.YTick = unique( round(ax.YTick) );
-
-% resulttime = cputime-runningtime  %computation time
-
-design_app
+plot(loss1)
+design_app 
 design_ex
-L_val = [L00, loss1(1), loss1(end)].';
-rowname = {'Approx', 'Exact (initial)', 'Exact (Final)'}.';
-table(L_val, 'RowNames', rowname)
+sum(design_ex(:, 3))
+L_val = [L00, min(loss1), loss1(end)].';
+table(L_val, 'RowNames', {'Approx',  'Exact (min)', 'Exact (end)'})
