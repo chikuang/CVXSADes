@@ -2,13 +2,13 @@
 %%Four dose-response models 
 
 clear;
-criterion = "D";
+criterion = "A";
 tol = 10^(-4);
 tol_annealing = 1E-40;
-Nsim = 20;
-N = 51;         %number of design points   
+Nsim = 10;
+N = 201;         %number of design points   
 n = [10, 20, 30, 40, 50,60]';
-n = 10;
+n = 20;
 a = 0;  b = 500; %[a, b] is the design space
 u = linspace(a,b,N); %equally spaced N points in [a,b]
 v0 = 60; v1 = 294; v2=25;   %true parameter values for Emax I model 
@@ -39,11 +39,25 @@ cvx_begin
     for j=1:N
         A1 = A1+F1i(:,:,j)*w(j);
     end        
-    minimize( - det_rootn(A1) )      
+
+     if criterion == "D"
+      minimize( - det_rootn(A1) )  
+    elseif criterion == "A"
+      minimize( trace_inv(A1) );
+    else
+      fprintf('Does not run.');
+     end
     0 <= w <= 1;
     sum(w)==1;
 cvx_end
-Loss1=1/(det(A1))^(1/p1);
+
+  if criterion == "D"
+      Loss1 = 1/(det(A1))^(1/p1);
+    elseif criterion == "A"
+      Loss1 = trace(inv(A1));   %A-opt
+    else
+      fprintf('Does not run.');
+  end
 %design=[u(find(w(1,:)>tol))' w(1,find(w(1,:)>tol))']   
     
 %Compute the D-optimal design for Emax I model
@@ -53,12 +67,25 @@ cvx_begin
     expression A2(p2,p2); 
     for j=1:N
         A2 = A2+F2i(:,:,j)*w(j);
-    end        
-    minimize( - det_rootn(A2) )   %D-optimality   
+    end
+     if criterion == "D"
+      minimize( - det_rootn(A2) )  
+    elseif criterion == "A"
+      minimize( trace_inv(A2) );   %A-opt
+    else
+      fprintf('Does not run.');
+     end
     0 <= w <= 1;
     sum(w)==1;
 cvx_end
-Loss2=1/(det(A2))^(1/p2);
+if criterion == "D"
+    Loss2=1/(det(A2))^(1/p2);
+  elseif criterion == "A"
+    Loss2 = trace(inv(A2));   %A-opt
+  else
+    fprintf('Does not run.');
+end
+
 %design=[u(find(w(1,:)>tol))' w(1,find(w(1,:)>tol))']   
 
 %Compute the D-optimal design for Emax II model
@@ -70,11 +97,23 @@ cvx_begin
     for j=1:N
         A3 = A3+F3i(:,:,j)*w(j);
     end               
-    minimize( - det_rootn(A3) )   %D-optimality   
+     if criterion == "D"
+      minimize( - det_rootn(A3) );
+    elseif criterion == "A"
+      minimize( trace_inv(A3) );
+    else
+      fprintf('Does not run.');
+     end 
     0 <= w <= 1;
     sum(w)==1;
 cvx_end
-Loss3=1/(det(A3))^(1/p3);
+if criterion == "D"
+    Loss3=1/(det(A3))^(1/p3);
+  elseif criterion == "A"
+    Loss3 = trace(inv(A3));   %A-opt
+  else
+    fprintf('Does not run.');
+end
 %design=[u(find(w(1,:)>tol))' w(1,find(w(1,:)>tol))']   
 
 %Compute the D-optimal design for logistic model
@@ -84,12 +123,24 @@ cvx_begin
     expression A4(p4,p4); 
     for j=1:N
         A4 = A4+F4i(:,:,j)*w(j);
-    end      
-    minimize( - det_rootn(A4) )   %D-optimality   
+    end
+    if criterion == "D"
+      minimize( - det_rootn(A4) );
+    elseif criterion == "A"
+      minimize( trace_inv(A4) );;   %A-opt
+    else
+      fprintf('Does not run.');
+     end 
     0 <= w <= 1;
     sum(w)==1;
 cvx_end
-Loss4=1/(det(A4))^(1/p4);
+if criterion == "D"
+    Loss4=1/(det(A4))^(1/p4);
+  elseif criterion == "A"
+    Loss4 = trace(inv(A4));   %A-opt
+  else
+    fprintf('Does not run.');
+end
 %design=[u(find(w(1,:)>tol))' w(1,find(w(1,:)>tol))']   
 
 %Compute the Maximin D-efficiency design for the 4 models
@@ -106,19 +157,42 @@ cvx_begin
         B3 = B3+F3i(:,:,j)*w(j);
         B4 = B4+F4i(:,:,j)*w(j);
     end         
-    maximize w(N+1)
-    det_rootn(B1)- w(N+1)/Loss1 >=0; 
-    det_rootn(B2)- w(N+1)/Loss2 >=0; 
-    det_rootn(B3)- w(N+1)/Loss3 >=0; 
-    det_rootn(B4)- w(N+1)/Loss4 >=0; 
+    
+
+    if criterion == "D"
+      maximize w(N+1)
+      det_rootn(B1)- w(N+1)/Loss1 >=0; 
+      det_rootn(B2)- w(N+1)/Loss2 >=0; 
+      det_rootn(B3)- w(N+1)/Loss3 >=0; 
+      det_rootn(B4)- w(N+1)/Loss4 >=0; 
+    elseif criterion == "A"
+      minimize w(N+1)
+      trace_inv(B1) - w(N+1)*Loss1 <=0
+      trace_inv(B2) - w(N+1)*Loss2 <=0
+      trace_inv(B3) - w(N+1)*Loss3 <=0
+      trace_inv(B4) - w(N+1)*Loss4 <=0
+    else
+      fprintf('Does not run.');
+     end 
     0 <= w;
     sum(w(1:N))==1;
 cvx_end
 
-Loss1d=1/(det(B1))^(1/p1);
-Loss2d=1/(det(B2))^(1/p2);
-Loss3d=1/(det(B3))^(1/p3);
-Loss4d=1/(det(B4))^(1/p4);
+if criterion == "D"
+    Loss1d=1/(det(B1))^(1/p1);
+    Loss2d=1/(det(B2))^(1/p2);
+    Loss3d=1/(det(B3))^(1/p3);
+    Loss4d=1/(det(B4))^(1/p4);
+  elseif criterion == "A"
+    Loss1d = trace(inv(B1));
+    Loss2d = trace(inv(B2));
+    Loss3d = trace(inv(B3));
+    Loss4d = trace(inv(B4));
+  else
+    fprintf('Does not run.');
+end
+
+
 eff1=Loss1/Loss1d;  %Efficiency at the maximin design
 eff2=Loss2/Loss2d;
 eff3=Loss3/Loss3d;
@@ -250,10 +324,19 @@ for pig = 1:size(n,1)
           B3 = B3+F3i(:,:,j)*wi(j);
           B4 = B4+F4i(:,:,j)*wi(j);
         end  
-        Loss1d=1/(det(B1))^(1/p1);
-        Loss2d=1/(det(B2))^(1/p2);
-        Loss3d=1/(det(B3))^(1/p3);
-        Loss4d=1/(det(B4))^(1/p4);
+        if criterion == "D"
+          Loss1d=1/(det(B1))^(1/p1);
+          Loss2d=1/(det(B2))^(1/p2);
+          Loss3d=1/(det(B3))^(1/p3);
+          Loss4d=1/(det(B4))^(1/p4);
+        elseif criterion == "A"
+          Loss1d = trace(inv(B1));
+          Loss2d = trace(inv(B2));
+          Loss3d = trace(inv(B3));
+          Loss4d = trace(inv(B4));
+        else
+          fprintf('Does not run.');
+        end
         eff1=Loss1/Loss1d;  %Efficiency at the maximin design
         eff2=Loss2/Loss2d;
         eff3=Loss3/Loss3d;
@@ -310,10 +393,20 @@ for pig = 1:size(n,1)
       B3 = B3 + F3i(:,:,j)*w_final(j);
       B4 = B4 + F4i(:,:,j)*w_final(j);
     end  
-    Loss1d=1/(det(B1))^(1/p1);
-    Loss2d=1/(det(B2))^(1/p2);
-    Loss3d=1/(det(B3))^(1/p3);
-    Loss4d=1/(det(B4))^(1/p4);
+
+    if criterion == "D"
+        Loss1d=1/(det(B1))^(1/p1);
+        Loss2d=1/(det(B2))^(1/p2);
+        Loss3d=1/(det(B3))^(1/p3);
+        Loss4d=1/(det(B4))^(1/p4);
+      elseif criterion == "A"
+        Loss1d = trace(inv(B1));
+        Loss2d = trace(inv(B2));
+        Loss3d = trace(inv(B3));
+        Loss4d = trace(inv(B4));
+      else
+        fprintf('Does not run.');
+    end
     eff1=Loss1/Loss1d;  %Efficiency at the maximin design
     eff2=Loss2/Loss2d;
     eff3=Loss3/Loss3d;
