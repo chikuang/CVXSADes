@@ -1,13 +1,12 @@
 %%Compute D-optimal designs for polynomial regression with exact n points
  
 clear;
-criterion = "D";
+criterion = "A";
 tol = 1E-4; % for finding and filtering out the points 
-N = 501;
-% Nsim = 500;
-Nsim = 20;
+% N = 21;
+Nsim = 500;
 % n = [10, 20 , 30, 40, 50]';
-n = 20;
+n = [10, 20,30,40]';
 tol_annealing = 1E-40;
 
 % number of design points for initial design
@@ -44,25 +43,25 @@ design_true_half = design_true(:,(n_half+1):end);
 
 c0 = 1; % max number of points to be changed in the annealing algorithm
 Nt = 200; % number of iterations per temperature change
-T0 = 0.1; % initial temperature
-M0 = 500; % number of temperature changes before algorithm stops
+T0 = 5; % initial temperature
+M0 = 2000; % number of temperature changes before algorithm stops
 alpha = 0.9;  %temperature cooling rate
 
 Tmin = T0 * alpha^M0; %minimum temperature
 
-delta = 2*(b-a)/(N-1); % neighbourhood size, in this setting, it is 0.2
+delta = 2*(b-a)/500; % neighbourhood size, in this setting, it is 0.2
 w00 = design_true(2,:);
 d00 = design_true(1,:);
 
-my_loss = zeros(5, size(N,1));
+my_loss = zeros(5, size(n,1));
 for pig = 1:size(n,1)
   disp(n(pig))
   n_kai = n(pig)/2;
   LOSS = zeros(Nsim, 4);
   for ell=1:Nsim 
-    % disp(ell)
+    disp(ell)
     rng(ell);  %random seed number
-    rng(466)
+    % rng(466)
 
     w01_half = initializeExact(w00_half, n_kai)/2'; %convert approximate design lazily to an exact design
     d0_half = design_true_half(1, :);
@@ -201,7 +200,6 @@ for pig = 1:size(n,1)
   design_ex_temp = round(sortrows([di_final; wi_final]),4);
   n_count = groupcounts(design_ex_temp(1,:)'); % this 
   sum(wi_final);
-  % design_ex = [val, n_count]'
   LOSS(ell,:) = [ell, min(loss1(end)), sum(wi_final), sum(n_count)];
   end
   LOSS_filter = LOSS(round(LOSS(:,3), 3) == 1 & LOSS(:,4) == n(pig), :);
@@ -229,9 +227,13 @@ for j=1:size(design_ex,2)
   fx = power(d_final(j), 0:p)';
   FIM_final = FIM_final + (fx * fx') * w_final(j);
 end
-
-exp(-log(det(FIM_final)^(1/q)))
-
+if criterion == "D"
+  Loss_ex = exp(-log(det(FIM_final)^(1/q)));
+elseif criterion == "A"
+  Loss_ex = trace(inv(FIM_final));
+else
+  disp("invalid input")
+end
 
 
 my_table = array2table(my_loss,  'RowNames', {'loss', 'n', 'sum of weight', 'n_design', 'seed'});
@@ -255,7 +257,6 @@ for j=1:size(design_true_A,2)
   w = design_true_A(2, j);
   C = C + (f * f') * w;
 end
-
 opt_A = trace(inv(C));   %A-opt
-exp(-log(det(FIM_final)^(1/q)))
-exp(opt_D)
+L_val = [exp(opt_D), opt_A, Loss_ex].';
+table(L_val, 'RowNames', {'opt D',  'opt A', 'Exact'})
