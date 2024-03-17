@@ -39,7 +39,7 @@ alpha = 0.9;  %temperature cooling rate
 
 Tmin = T0 * alpha^M0; %minimum temperature
 
-delta = 2*(b-a)/(N-1); % neighbourhood size, in this setting, it is 0.2
+delta = 2*(b-a)/500; % neighbourhood size, in this setting, it is 0.2
 w00 = design_true(2,:);
 d00 = design_true(1,:);
 
