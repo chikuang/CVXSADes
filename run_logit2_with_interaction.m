@@ -5,14 +5,13 @@
 % for the two-variable binary logistic regression model with interaction. Journal of Statistical Planning and Inference, 193, 136-150.
  
 
-criterion = "E";
-% beta = [1, 2, 2, 0.2]';
+criterion = "D";
 beta = [-3, 4, 6, 1]' ; 
 S1 = [0, 1]; 
 S2 = [0, 1]; 
 p = 2; % Dimension
 Nsim = 1;
-N1 = 21; % Number of design p       oints of each dimension
+N1 = 51; % Number of design p       oints of each dimension
 N = N1^p;
 % n = [5, 10, 15, 20]'; 
 n = 10
@@ -108,8 +107,9 @@ for pig = 1:size(n,1)
   disp(n_i)
  
   for ell=1:Nsim 
-    % disp(ell)
+    disp(ell)
     % rng(ell);  %random seed number
+    rng(278)
     loss = zeros(1, M0*Nt);
     loss(1) = L0;
     w01 = initializeExact(w00, n_i); %convert approximate design lazily to an exact design
@@ -241,3 +241,11 @@ design_ex
 sum(design_ex(:, 3)) % number of points
 L_val = [L00, min(loss1), loss1(end)].';
 table(L_val, 'RowNames', {'Approx',  'Exact (min)', 'Exact (end)'})
+
+ scatter(design_app(:,1), design_app(:,2), 100)
+ ylim([-0.05 1.05])
+ xlim([-0.05 1.05])
+
+ scatter(design_ex(:,1), design_ex(:,2), 100)
+ ylim([-0.05 1.05])
+ xlim([-0.05 1.05])
