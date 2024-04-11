@@ -399,12 +399,12 @@ for pig = 1:size(n,1)
         Loss2d=1/(det(B2))^(1/p2);
         Loss3d=1/(det(B3))^(1/p3);
         Loss4d=1/(det(B4))^(1/p4);
-      elseif criterion == "A"
+    elseif criterion == "A"
         Loss1d = trace(inv(B1));
         Loss2d = trace(inv(B2));
         Loss3d = trace(inv(B3));
         Loss4d = trace(inv(B4));
-      else
+    else
         fprintf('Does not run.');
     end
     eff1=Loss1/Loss1d;  %Efficiency at the maximin design
