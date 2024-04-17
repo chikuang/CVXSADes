@@ -5,7 +5,9 @@
 %   Computing D-optimal design under OLSE
 
 %% 1.  Input
-criterion = 'D';
+criterion = 'c';
+n = [14]';
+rng(17);  % for c-optimality
 if criterion == "c"
   cVec = [1, 0, 0]';
 end
@@ -15,8 +17,8 @@ b = range(2);
 theta = [0.07, 0.93, 0.96]';
 p0 = theta(1); p1 = theta(2); p2 = theta(3);
 N = 61;
-Nsim = 50;
-n = [10,11,12,13,14]';
+Nsim = 1;
+
 tol_annealing = 1E-40;
 tol = 1E-4; % for finding and filtering out the points 
 %% 2. Initilization
@@ -80,18 +82,14 @@ Tmin = T0 * alpha^M0; %minimum temperature
 delta = 2*(b-a)/500; % neighbourhood size, in this setting, it is 0.2
 q = 3;
 my_loss = zeros(5, size(n,1));
-for pig = 1:size(n,1)
-  LOSS = zeros(Nsim, 4);
-  n_i = n(pig);
-  disp(n_i)
-  for ell=1:Nsim 
-    disp(ell)
-    rng(ell);  %random seed number
-    % rng(6);
-    % w01 = initializeExact2(w00, n); %convert approximate design lazily to an exact design
-    w01 = initializeExact3(w00, n_i); %convert approximate design lazily to an exact design
-    w0 = w01;
-    d0 = design_app(1,:);
+n_i = n;
+
+%% Annealing
+
+  
+w01 = initializeExact3(w00, n_i); %convert approximate design lazily to an exact design
+w0 = w01;
+d0 = design_app(1,:);
     k = length(w0); 
   
     FIM = zeros(q, q);
@@ -230,39 +228,17 @@ for pig = 1:size(n,1)
       T = alpha*T;
     end
     loss1 = loss(2:num_iters);
-    
-    %% 4. PLOTTING RESULTS
-    % here, we group the values that are the same together
-    design_ex_temp = round(sortrows([d0, w0]),4);
+   design_ex_temp = round(sortrows([d0, w0]),4);
     val = unique(design_ex_temp(:,1));
     n_count = groupcounts(design_ex_temp(:,1));
     sum(w0);
     design_ex = [val, n_count]';
-    LOSS(ell,:) = [ell, min(loss1(end)), sum(wi), sum(n_count)];
-  end
-  LOSS_filter = LOSS(round(LOSS(:,3), 3) == 1 & LOSS(:,4) == n_i, :);
-  [M, I] = min(LOSS_filter(:,2));
-  my_loss(1, pig) = M;
-  my_loss(2, pig) = n_i;
-  my_loss(3, pig) = LOSS_filter(I,3); 
-  my_loss(4, pig) = LOSS_filter(I,4);
-  my_loss(5, pig) = LOSS_filter(I,1);
-end
-my_table = array2table(my_loss, ...
-  'RowNames', {'loss', 'n', 'sum of weight', 'n_design', 'seed'});
-my_table
-sortrows(LOSS, 2, "descend");
-L00
-min(LOSS(:,2))
 
 design_app
 design_ex
 loss1(end)
 L00
 Effc=L00/loss1(end)
- 
-my_loss
-
 plot(1:length(loss1), loss1) %annealing loss function plot
 xlabel('iteration')
 ylabel('Loss function')

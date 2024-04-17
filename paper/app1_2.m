@@ -9,10 +9,10 @@ criterion = "D";
 % beta = [1, 2, 2, 0.2]';
 % beta = [-3, 4, 6, 1]' ; %Example 4.2 (b)
 beta = [-2.2054, 13.5803, 2.2547, 1.6262]' ; %A real example
-S1 = [0, 1]; 
-S2 = [0, 1]; 
+S1 = [0, 2]; 
+S2 = [0, 2]; 
 p = 2; % Dimension
-Nsim = 100;
+Nsim = 1;
 N1 = 21; % Number of design p       oints of each dimension
 N = N1^p;
 n = [10]';
@@ -109,7 +109,7 @@ for pig = 1:size(n,1)
  
   for ell=1:Nsim 
     disp(ell)
-    ell = 20
+    % ell = 20
     rng(ell);  %random seed number
     loss = zeros(1, M0*Nt);
     loss(1) = L0;
