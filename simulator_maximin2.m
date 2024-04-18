@@ -5,10 +5,10 @@ clear;
 criterion = "A";
 tol = 10^(-4);
 tol_annealing = 1E-40;
-Nsim = 10;
+Nsim = 100;
 N = 201;         %number of design points   
-n = [10, 20, 30, 40, 50,60]';
-n = 20;
+n = [10, 20, 30]';
+% n = 20;
 a = 0;  b = 500; %[a, b] is the design space
 u = linspace(a,b,N); %equally spaced N points in [a,b]
 v0 = 60; v1 = 294; v2=25;   %true parameter values for Emax I model 

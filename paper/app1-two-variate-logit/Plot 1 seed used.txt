@@ -1,0 +1,5 @@
+Plot 1 seed used
+
+# n = 10, seed = 10,
+# n = 15, seed = 78,
+# n = 20, seed = 93

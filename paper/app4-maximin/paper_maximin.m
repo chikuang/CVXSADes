@@ -2,12 +2,12 @@
 %%Four dose-response models 
 
 clear;
-criterion = "D";
+criterion = "A";
 tol = 10^(-4);
 tol_annealing = 1E-40;
-Nsim = 100;
+Nsim = 1;
 N = 201;         %number of design points   
-n = 10;
+n = 20;
 a = 0;  b = 500; %[a, b] is the design space
 u = linspace(a,b,N); %equally spaced N points in [a,b]
 v0 = 60; v1 = 294; v2=25;   %true parameter values for Emax I model 
@@ -225,7 +225,9 @@ for pig = 1:size(n,1)
   
   for ell=1:Nsim 
     % disp(ell)
+    ell = 94
     rng(ell);  %random seed number
+    
     loss = zeros(1, M0*Nt);
     loss(1) = L0;
     %% Annealing

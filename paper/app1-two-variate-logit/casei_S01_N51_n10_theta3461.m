@@ -13,7 +13,7 @@ Nsim = 1;
 N1 = 51; % Number of design p       oints of each dimension
 N = N1^p;
 n = 10
-
+rng(10)
 %% Generate multi-dimensional space (using some Matlab tricks)
 X = cell(1, p);
 X(:) = {linspace(S1(1), S1(2), N1)};
@@ -99,7 +99,7 @@ end
 
 
 n_i = n;
-rng(70)
+
 loss = zeros(1, M0*Nt);
 loss(1) = L0;
 w01 = initializeExact(w00, n_i); %convert approximate design lazily to an exact design

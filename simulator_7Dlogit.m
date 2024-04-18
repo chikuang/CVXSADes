@@ -2,7 +2,7 @@
 %%with exact n points
  
 criterion = "D";
-my_case = 3;
+my_case = 1;
 beta = [-0.4926, -0.6280, -0.3283, 0.4378, 0.5283, -0.6120, -0.6837, -0.2061]'; 
 if my_case == 1
   S1 = [-1, 1];
@@ -16,7 +16,7 @@ end
 p = 7; % Dimension
 N1 = 4; % Number of design points of each dimension
 N = N1^p;
-Nsim = 20;
+Nsim = 100;
 %% Generate multi-dimensional space (using some Matlab tricks)
 X = cell(1, p);
 X(:) = {linspace(S1(1), S1(2), N1)};
@@ -28,7 +28,7 @@ tol_annealing = 1E-40;
 q = length(beta);
 
 % n=[10, 20,30,40]';
-n = [10, 20, 30, 40]';
+n = [30]';
 
 %% Step 2, calculate ethe optimal design of in S_t
 cvx_begin quiet
