@@ -1,10 +1,14 @@
 # exact-design-SA
-Construct an exact design using CVX in conjunction with simulated annealing (SA).
 
-## Authors:
-1. [Julie Zhou](https://www.uvic.ca/science/math-statistics/people/home/faculty/zhou_julie.php)
-2. [Chi-Kuang Yeh](https://chikuang.github.io/)
+*[Chi-Kuang Yeh](https://chikuang.github.io/) & [Julie Zhou](https://www.uvic.ca/science/math-statistics/people/home/faculty/zhou_julie.php)*
 
+*April 27, 2024*
+
+---
+
+### Description
+
+Implementation of finding the optimal exact regression designs with complex settings using CVX in conjuction with the simulated annealing (SA) algorithm. The applications including 1) High-dimensional design, 2) Maximin design with competing optimal criteria and 3) Integer design problems.
 
 ### TODO
 - [ ] It would be even better if we can use the symmetry property in the annealing algorithm for the cubic model. We can just work on the design points on [0, 1] and make it symmetric on [-1, 0].
