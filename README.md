@@ -21,5 +21,5 @@ Windows Machine with an i9 processor equipped with MATLAB 2023 version B update 
 3. Group design for disease prevalence
 4. Maximin design with three competing design criteria.
 
-Reference paper:
+### Reference paper
 Yeh, C.-K. & Zhou, J. (2024+). CVXSADes: A stochastic algorithm for constructing optimal exact regression designs with single or multiple objectives. Preprint will be available soon.
