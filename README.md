@@ -1,4 +1,4 @@
-# CVXSADes: CVX-simulated annealing algorithm to find exact regression designs
+# CVXSADes: CVX-simulated annealing algorithm for finding exact regression designs
 
 *[Chi-Kuang Yeh](https://chikuang.github.io/) & [Julie Zhou](https://www.uvic.ca/science/math-statistics/people/home/faculty/zhou_julie.php)*
 
